@@ -1,20 +1,20 @@
 from django.shortcuts import render
-from django.contrib import messages
 import requests
 import datetime
 
 def home(request):
-    # Get the city from the search box, or default to 'Pune' when the page first loads
-    city = request.POST.get('city', 'Pune')
-    if not city.strip():
-        city = 'Pune'
+    city = 'Pune'
+    if request.method == 'POST':
+        user_city = request.POST.get('city')
+        if user_city and user_city.strip():
+            city = user_city.strip()
 
     # OpenWeatherMap API
     url = f'https://api.openweathermap.org/data/2.5/weather?q={city}&appid=402dd1f6a516a443a97ec6d8eabd1d8f'
     PARAMS = {'units': 'metric'}
 
-    # Google Custom Search API for background images
-    image_url = None
+    # Google Custom Search API for background images (safe fallback if it fails)
+    image_url = 'https://images.unsplash.com/photo-1534088568595-a066fa41088a'
     try:
         API_KEY = 'AIzaSyCkZPY0yMGjVD3VKyqIU_XfhrvZyNHvMw8'
         SEARCH_ENGINE_ID = '8418bff11a3a541dc'
@@ -24,19 +24,18 @@ def home(request):
         search_data = requests.get(city_url).json()
         search_items = search_data.get("items")
         if search_items:
-            image_url = search_items[0].get('link')
+            image_url = search_items[0].get('link', image_url)
     except Exception:
-        image_url = None
+        pass
 
-    # Fallback default background if image search fails
-    if not image_url:
-        image_url = 'https://images.unsplash.com/photo-1534088568595-a066fa41088a'
-
+    # Fetch weather data safely
     try:
-        data = requests.get(url, params=PARAMS).json()
-        if data.get('cod') != 200:
-            raise Exception("City not found")
-            
+        response = requests.get(url, params=PARAMS)
+        data = response.json()
+        
+        if response.status_code != 200 or 'weather' not in data:
+            raise Exception("Weather data not found")
+
         description = data['weather'][0]['description']
         icon = data['weather'][0]['icon']
         temp = data['main']['temp']
@@ -53,9 +52,7 @@ def home(request):
         })
 
     except Exception:
-        messages.error(request, 'Entered city is not available or invalid.')
         day = datetime.date.today()
-
         return render(request, 'weatherapp/index.html', {
             'description': 'clear sky',
             'icon': '01d',
