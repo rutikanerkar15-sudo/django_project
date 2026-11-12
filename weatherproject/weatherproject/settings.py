@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-z1c)q%1yia3(of)q^h+lee@#+^1qoqawe52%n-_i#!ak@sikyn
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['weather-app-m9qw.onrender.com', '.onrender.com', '127.0.0.1', 'localhost']
 
 
 # Application definition
